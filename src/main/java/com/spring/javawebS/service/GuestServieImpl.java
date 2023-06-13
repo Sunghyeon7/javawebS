@@ -9,7 +9,7 @@ import com.spring.javawebS.dao.GuestDAO;
 import com.spring.javawebS.vo.GuestVO;
 
 @Service
-public class GuestServiceImpl implements GuestService {
+public class GuestServieImpl implements GuestService {
 
 	@Autowired
 	GuestDAO guestDAO;
@@ -21,22 +21,25 @@ public class GuestServiceImpl implements GuestService {
 
 	@Override
 	public int setGuestInput(GuestVO vo) {
-
 		return guestDAO.setGuestInput(vo);
 	}
 
 	@Override
 	public int getAdminCheck(String mid, String pwd) {
 		int res = 0;
-		
 		if(mid.equals("admin") && pwd.equals("1234")) res = 1;
 		return res;
 	}
 
 	@Override
 	public int totRecCnt() {
-
 		return guestDAO.totRecCnt();
 	}
+
+	@Override
+	public int setGuestDelete(int idx) {
+		return guestDAO.setGuestDelete(idx);
+	}
+	
+	
 }
- 
