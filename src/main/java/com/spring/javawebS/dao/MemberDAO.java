@@ -18,6 +18,10 @@ public interface MemberDAO {
 
 	public ArrayList<MemberVO> getMemberList(@Param("startIndexNo") int startIndexNo, @Param("pageSize") int pageSize, @Param("mid") String mid);
 
-	public void setMemberPwdUpdate(@Param("mid") String mid,@Param("pwd")  String pwd);
+	public void setMemberPwdUpdate(@Param("mid") String mid, @Param("pwd") String pwd);
+
+	public void setMemberUpdateOk(@Param("vo") MemberVO vo);
+
+	public void setMemberDeleteOk(@Param("mid") String mid);
 
 }

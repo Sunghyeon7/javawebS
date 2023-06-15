@@ -1,5 +1,8 @@
 package com.spring.javawebS;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
@@ -8,7 +11,9 @@ import java.util.UUID;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -16,11 +21,12 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
-import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.spring.javawebS.common.ARIAUtil;
 import com.spring.javawebS.common.SecurityUtil;
@@ -32,7 +38,7 @@ import com.spring.javawebS.vo.MemberVO;
 @Controller
 @RequestMapping("/study")
 public class StudyController {
-
+	
 	@Autowired
 	StudyService studyService;
 	
@@ -131,14 +137,14 @@ public class StudyController {
 		messageHelper.setText(content, true);
 		
 		// 본문에 기재된 그림파일의 경로를 별도로 표시시켜준다. 그런후, 다시 보관함에 담아준다.
-		FileSystemResource file = new FileSystemResource("D:\\javaweb\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.jpg");
+		FileSystemResource file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.jpg");
 		messageHelper.addInline("main.jpg", file);
 		
 		// 첨부파일 보내기(서버 파일시스템에 존재하는 파일을 보내기)
-		file = new FileSystemResource("D:\\javaweb\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\chicago.jpg");
+		file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\chicago.jpg");
 		messageHelper.addAttachment("chicago.jpg", file);
-		
-		file = new FileSystemResource("D:\\javaweb\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.zip");
+
+		file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.zip");
 		messageHelper.addAttachment("main.zip", file);
 		
 //		ServletContext application = request.getSession();
@@ -304,5 +310,84 @@ public class StudyController {
 	@RequestMapping(value = "/ajax/ajaxTest3_2", method = RequestMethod.POST)
 	public ArrayList<MemberVO> ajaxTest3_2Post(String name) {
 		return studyService.getMemberMidSearch2(name);
+	}
+	
+	// 파일 업로드 폼
+	/*
+	 * @RequestMapping(value = "/fileUpload/fileUploadForm", method =
+	 * RequestMethod.GET) public String fileUploadGet() { return
+	 * "study/fileupload/fileUploadForm"; }
+	 */
+	
+	// 파일 업로드 폼
+	@RequestMapping(value = "/fileUpload/fileUploadForm", method = RequestMethod.GET)
+	public String fileUploadGet(HttpServletRequest request, Model model) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/study/");
+		
+		String[] files = new File(realPath).list();
+		
+//		for(String file : files) {
+//			System.out.println("file : " + file);
+//		}
+		
+		model.addAttribute("files", files);
+		model.addAttribute("fileCount", files.length);
+		
+		return "study/fileupload/fileUploadForm";
+	}
+	
+	// 파일 업로드 처리
+	@RequestMapping(value = "/fileUpload/fileUploadForm", method = RequestMethod.POST)
+	public String fileUploadPost(MultipartFile fName, String mid) {
+//		System.out.println("fName : " + fName);
+//		System.out.println("mid : " + mid);
+		
+		int res = studyService.fileUpload(fName, mid);
+		
+		if( res == 1)return "redirect:/message/fileUploadOk";
+		else return "redirect:/message/fileUploadNo";
+	}
+	// 파일 삭제 처리
+	@ResponseBody
+	@RequestMapping(value = "/fileUpload/fileDelete", method = RequestMethod.POST)
+	public String fileDeletePost(
+			@RequestParam(name="file", defaultValue = "", required = false) String fName,
+			HttpServletRequest request) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/study/");
+
+		String res = "0";
+		File file = new File(realPath + fName);
+		
+		if(file.exists()) {
+			file.delete();
+			res = "1";
+		}
+		return res;
+	}
+	// 파일 다운로드 메소드
+	@RequestMapping(value = "/fileUpload/fileDownAction", method = RequestMethod.GET)
+	public void fileDownActionGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+		String file = request.getParameter("file");
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/study/");
+		
+		File downFile = new File(realPath+file);
+		
+		String downFileName = new String(file.getBytes("UTF-8"), "8859_1");
+		response.setHeader("Content-Disposition", "attachment:filename="+downFileName);
+		
+		FileInputStream fis = new FileInputStream(downFile);
+		ServletOutputStream sos = response.getOutputStream();
+		
+		byte[] buffer = new byte[2048];
+		int data = 0;
+		
+		while((data = fis.read(buffer, 0, buffer.length)) != -1) {
+			sos.write(buffer, 0, data);
+		}
+		sos.flush();
+		sos.close();
+		fis.close();
+		
+		// return "study/fileUpload/fileUploadForm";
 	}
 }
