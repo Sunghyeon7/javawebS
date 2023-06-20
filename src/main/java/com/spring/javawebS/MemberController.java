@@ -1,5 +1,6 @@
 package com.spring.javawebS;
 
+import java.util.List;
 import java.util.UUID;
 
 import javax.mail.MessagingException;
@@ -22,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.spring.javawebS.pagination.PageProcess;
+import com.spring.javawebS.pagination.PageVO;
 import com.spring.javawebS.service.MemberService;
 import com.spring.javawebS.vo.MemberVO;
 
@@ -37,6 +40,9 @@ public class MemberController {
 	
 	@Autowired
 	JavaMailSender mailSender;
+	
+	@Autowired
+	PageProcess pageProcess;
 	
 	@RequestMapping(value = "/memberLogin", method = RequestMethod.GET)
 	public String memberLoginGet(HttpServletRequest request) {
@@ -215,6 +221,7 @@ public class MemberController {
 		content += "<p>방문하기 : <a href='http://49.142.157.251:9090/cjgreen/'>CJ Green프로젝트</a></p>";
 		content += "<hr>";
 		messageHelper.setText(content, true);
+		
 		// 본문에 기재된 그림파일의 경로를 별도로 표시시켜준다. 그런후, 다시 보관함에 담아준다.
 		FileSystemResource file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.jpg");
 		messageHelper.addInline("main.jpg", file);
@@ -277,17 +284,18 @@ public class MemberController {
 		if(memberService.getMemberNickCheck(vo.getNickName()) != null && !nickName.equals(vo.getNickName())) {
 			return "redirect:/message/memberNickCheckNo";
 		}
+		
 		int res = memberService.setMemberUpdateOk(fName, vo);
 		
 		if(res == 1) {
 			session.setAttribute("sNickName", vo.getNickName());
-			return "redirect:/message/memberUpdateOk";			
+			return "redirect:/message/memberUpdateOk";
 		}
 		else {
 			return "redirect:/message/memberUpdateNo";
 		}
 	}
-
+	
 	// 회원 탈퇴처리(userDel = 'OK')
 	@RequestMapping(value = "/memberDelete", method = RequestMethod.GET)
 	public String memberDelete(HttpSession session, Model model) {
@@ -299,8 +307,23 @@ public class MemberController {
 		model.addAttribute("mid", mid);
 		
 		return "redirect:/message/memberDeleteOk";
+	}
 	
-	
-}
-
+	@RequestMapping(value = "/memberList", method = RequestMethod.GET)
+	public String memberListGet(Model model,
+			@RequestParam(name="mid", defaultValue = "", required = false) String mid,
+			@RequestParam(name="pag", defaultValue = "1", required = false) int pag,
+			@RequestParam(name="pageSize", defaultValue = "3", required = false) int pageSize) {
+		
+		PageVO pageVO = pageProcess.totRecCnt(pag, pageSize, "member", "", mid);
+		
+		List<MemberVO> vos = memberService.getMemberList(pageVO.getStartIndexNo(), pageSize, mid);
+		
+		model.addAttribute("vos", vos);
+		model.addAttribute("pageVO", pageVO);
+		
+		model.addAttribute("mid", mid);
+		
+		return "member/memberList";
+	}
 }

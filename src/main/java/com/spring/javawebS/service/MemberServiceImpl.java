@@ -1,7 +1,6 @@
 package com.spring.javawebS.service;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -109,7 +108,6 @@ public class MemberServiceImpl implements MemberService {
 	@Override
 	public void setMemberDeleteOk(String mid) {
 		memberDAO.setMemberDeleteOk(mid);
-		
 	}
 	
 }

@@ -143,7 +143,6 @@ public class StudyController {
 		// 첨부파일 보내기(서버 파일시스템에 존재하는 파일을 보내기)
 		file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\chicago.jpg");
 		messageHelper.addAttachment("chicago.jpg", file);
-
 		file = new FileSystemResource("D:\\JavaWorkspace\\springframework\\works\\javawebS\\src\\main\\webapp\\resources\\images\\main.zip");
 		messageHelper.addAttachment("main.zip", file);
 		

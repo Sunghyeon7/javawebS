@@ -3,7 +3,9 @@ package com.spring.javawebS.pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.spring.javawebS.dao.BoardDAO;
 import com.spring.javawebS.dao.GuestDAO;
+import com.spring.javawebS.dao.MemberDAO;
 
 @Service
 public class PageProcess {
@@ -11,14 +13,27 @@ public class PageProcess {
 	@Autowired
 	GuestDAO guestDAO;
 	
+	@Autowired
+	MemberDAO memberDAO;
+	
+	@Autowired
+	BoardDAO boardDAO;
+	
 	public PageVO totRecCnt(int pag, int pageSize, String section, String part, String searchString) {
 		PageVO pageVO = new PageVO();
 		
 		int totRecCnt = 0;
+		String search = "";
 		
 		if(section.equals("guest"))	totRecCnt = guestDAO.totRecCnt();
-//		else if(section.equals("member"))	totRecCnt = memberDAO.totRecCnt();
-//		else if(section.equals("board"))	totRecCnt = boardDAO.totRecCnt();
+		else if(section.equals("member"))	totRecCnt = memberDAO.totRecCnt(searchString);
+		else if(section.equals("board")) {
+			if(part.equals("")) totRecCnt = boardDAO.totRecCnt();
+			else {
+				search = part;
+				totRecCnt = boardDAO.totRecCntSearch(search, searchString);
+			}
+		}
 		
 		int totPage = (totRecCnt % pageSize)==0 ? totRecCnt /pageSize : (totRecCnt / pageSize) + 1;
 		int startIndexNo = (pag - 1) * pageSize;
@@ -38,6 +53,8 @@ public class PageProcess {
 		pageVO.setBlockSize(blockSize);
 		pageVO.setLastBlock(lastBlock);
 		pageVO.setPart(part);
+		pageVO.setSearch(search);
+		pageVO.setSearchString(searchString);
 		
 		return pageVO;
 	}
