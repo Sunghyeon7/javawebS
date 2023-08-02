@@ -15,6 +15,7 @@ import javax.mail.internet.MimeMessage;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
@@ -22,6 +23,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -36,14 +38,17 @@ import com.spring.javawebS.common.ARIAUtil;
 import com.spring.javawebS.common.SecurityUtil;
 import com.spring.javawebS.service.MemberService;
 import com.spring.javawebS.service.StudyService;
+import com.spring.javawebS.vo.DbPayMentVO;
+import com.spring.javawebS.vo.KakaoAddressVO;
 import com.spring.javawebS.vo.MailVO;
 import com.spring.javawebS.vo.MemberVO;
+import com.spring.javawebS.vo.QrCodeVO;
+import com.spring.javawebS.vo.TransactionVO;
 import com.spring.javawebS.vo.UserVO;
 
 @Controller
 @RequestMapping("/study")
 public class StudyController {
-	
 	@Autowired
 	StudyService studyService;
 	
@@ -463,5 +468,261 @@ public class StudyController {
 		
 		return "redirect:/message/validatorDeleteOk";
 	}
+
+	// kakaomap Form 보기
+	@RequestMapping(value = "/kakaomap/kakaomap", method = RequestMethod.GET)
+	public String kakaomapGet() {
+		return "study/kakaomap/kakaomap";
+	}
+	
+	// kakaomap 클릭한 위치에 마커표시하기
+	@RequestMapping(value = "/kakaomap/kakaoEx1", method = RequestMethod.GET)
+	public String kakaoEx1Get() {
+		return "study/kakaomap/kakaoEx1";
+	}
+	
+	// kakaomap 클릭한 위치에 마커표시하기(DB저장)
+	@ResponseBody
+	@RequestMapping(value = "/kakaomap/kakaoEx1", method = RequestMethod.POST)
+	public String kakaoEx1Post(KakaoAddressVO vo) {
+		KakaoAddressVO searchVO = studyService.getKakaoAddressName(vo.getAddress());
+		if(searchVO != null) return "0";
+		studyService.setKakaoAddressInput(vo);
+		return "1";
+	}
+	
+	// kakaomap DB에 저장된 지명 검색하기
+	@RequestMapping(value = "/kakaomap/kakaoEx2", method = RequestMethod.GET)
+	public String kakaoEx2Get(Model model,
+			@RequestParam(name="address", defaultValue = "그린컴퓨터", required=false) String address) {
+		KakaoAddressVO vo = studyService.getKakaoAddressName(address);
+		List<KakaoAddressVO> vos = studyService.getKakaoAddressList();
+		
+		model.addAttribute("vo", vo);
+		model.addAttribute("vos", vos);
+		model.addAttribute("address", address);
+		
+		return "study/kakaomap/kakaoEx2";
+	}
+	
+	// kakaomap DB에 저장된 주소 삭제처리
+	@ResponseBody
+	@RequestMapping(value = "/kakaomap/kakaoAddressDelete", method = RequestMethod.POST)
+	public String kakaoAddressDeletePost(String address) {
+		studyService.setKakaoAddressDelete(address);
+		return "";
+	}
+	
+	// kakaomap Kakao데이터베이스에 들어있는 지명으로 검색하후 내DB에 저장하기
+	@RequestMapping(value = "/kakaomap/kakaoEx3", method = RequestMethod.GET)
+	public String kakaoEx3Get(Model model,
+			@RequestParam(name="address", defaultValue = "청주시청", required=false) String address) {
+		model.addAttribute("address", address);
+		
+		return "study/kakaomap/kakaoEx3";
+	}
+
+	// kakaomap 주변검색처리
+	@RequestMapping(value = "/kakaomap/kakaoEx4", method = RequestMethod.GET)
+	public String kakaoEx4Get(Model model,
+			@RequestParam(name="address", defaultValue = "청주시청", required=false) String address) {
+		model.addAttribute("address", address);
+		return "study/kakaomap/kakaoEx4";
+	}
+	
+	// kakaomap 주소 검색
+	@RequestMapping(value = "/kakaomap/kakaoEx5", method = RequestMethod.GET)
+	public String kakaoEx5Get(Model model,
+			@RequestParam(name="address", defaultValue = "청주시청", required=false) String address) {
+		model.addAttribute("address", address);
+		return "study/kakaomap/kakaoEx5";
+	}
+
+	// kakaomap 주소 검색
+	@RequestMapping(value = "/kakaomap/kakaoEx6", method = RequestMethod.GET)
+	public String kakaoEx6Get(Model model,
+			@RequestParam(name="address", defaultValue = "청주시청", required=false) String address) {
+		model.addAttribute("address", address);
+		return "study/kakaomap/kakaoEx6";
+	}
+
+	
+	// QR코드 폼
+	@RequestMapping(value = "/qrCode/qrCodeForm", method = RequestMethod.GET)
+	public String qrcodeFormGet() {
+		return "study/qrCode/qrCodeForm";
+	}
+	
+	// QR코드 폼(개인정보등록)
+	@RequestMapping(value = "/qrCode/qrCodeEx1", method = RequestMethod.GET)
+	public String qrcodeEx1Get() {
+		return "study/qrCode/qrCodeEx1";
+	}
+	
+	// QR코드 폼(개인정보등록)
+	@ResponseBody
+	@RequestMapping(value = "/qrCode/qrCodeEx1", method = RequestMethod.POST, produces="application/text; charset=utf8")
+	public String qrcodeEx1Post(QrCodeVO vo, HttpServletRequest request) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/qrCode/");
+		
+		String qrCodeName = studyService.qrCreate(vo, realPath);
+		
+		return qrCodeName;
+	}
+	
+	
+	// QR코드 폼(정보 사이트 등록)
+	@RequestMapping(value = "/qrCode/qrCodeEx2", method = RequestMethod.GET)
+	public String qrcodeEx2Get() {
+		return "study/qrCode/qrCodeEx2";
+	}
+	
+	// QR코드 폼(정보 사이트 등록)
+	@ResponseBody
+	@RequestMapping(value = "/qrCode/qrCodeEx2", method = RequestMethod.POST, produces="application/text; charset=utf8")
+	public String qrcodeEx2Post(QrCodeVO vo, HttpServletRequest request) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/qrCode/");
+		
+		String qrCodeName = studyService.qrCreate2(vo, realPath);
+		
+		return qrCodeName;
+	}
+
+	
+	// QR코드 폼(영화예매하기)
+	@RequestMapping(value = "/qrCode/qrCodeEx3", method = RequestMethod.GET)
+	public String qrcodeEx3Get() {
+		return "study/qrCode/qrCodeEx3";
+	}
+	
+	// QR코드 폼(영화예매하기)
+	@ResponseBody
+	@RequestMapping(value = "/qrCode/qrCodeEx3", method = RequestMethod.POST, produces="application/text; charset=utf8")
+	public String qrcodeEx3Post(QrCodeVO vo, HttpServletRequest request) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/qrCode/");
+		String qrCodeName = studyService.qrCreate3(vo, realPath);
+		return qrCodeName;
+	}
+	
+	// QR코드 폼(영화예매하기 DB 저장 / 확인)
+	@RequestMapping(value = "/qrCode/qrCodeEx4", method = RequestMethod.GET)
+	public String qrcodeEx4Get() {
+		return "study/qrCode/qrCodeEx4";
+	}
+	
+	// QR코드 폼(영화예매하기 DB 저장 / 확인)
+	@ResponseBody
+	@RequestMapping(value = "/qrCode/qrCodeEx4", method = RequestMethod.POST, produces="application/text; charset=utf8")
+	public String qrcodeEx4Post(QrCodeVO vo, HttpServletRequest request) {
+		String realPath = request.getSession().getServletContext().getRealPath("/resources/data/qrCode/");
+		String qrCodeName = studyService.qrCreate4(vo, realPath);
+		return qrCodeName;
+	}
+
+	
+//	// QR코드 폼(영화예매하기) - DB검색
+//	@ResponseBody
+//	@RequestMapping(value = "/qrCode/qrCodeSearch", method = RequestMethod.POST, produces="application/text; charset=utf8")
+//	public String qrCodeSearchPost(String qrCode) {
+//		System.out.println("qrCode : " + qrCode);
+//		
+//		QrCodeVO vo = studyService.getQrCodeSearch(qrCode);
+//		//System.out.println("vo : " + vo);
+//		
+//		String str = "";
+//		str += "아이디 : " + vo.getMid()+ ",";
+//		str += "성명 : " + vo.getName()+ ",";
+//		str += "이메일 : " + vo.getEmail()+ ",";
+//		str += "영화제목 : " + vo.getMovieName()+ ",";
+//		str += "상영일자 : " + vo.getMovieDate()+ ",";
+//		str += "상영시간 : " + vo.getMovieTime()+ ",";
+//		str += "성인수 : " + vo.getMovieAdult()+ ",";
+//		str += "어린이수 : " + vo.getMovieChild()+ ",";
+//		str += "티켓구매일자 : " + vo.getPublishNow();
+//		
+//		return str;
+//	}
+	
+	
+	// QR코드 폼(영화예매하기) - DB검색
+	@ResponseBody
+	@RequestMapping(value = "/qrCode/qrCodeSearch", method = RequestMethod.POST)
+	public QrCodeVO qrCodeSearchPost(String qrCode) {
+		
+		return studyService.getQrCodeSearch(qrCode);
+	}
+	
+	// 썸네일 이미지 연습 폼
+	@RequestMapping(value = "thumbnail/thumbnailForm", method = RequestMethod.GET)
+	public String captchaFormGET() {
+		
+		return "study/thumbnail/thumbnailForm";
+	}
+	
+	// 썸네일 이미지 생성
+	@RequestMapping(value = "thumbnail/thumbnailForm", method = RequestMethod.POST)
+	public String captchaFormPost(MultipartFile file) {
+		int res = studyService.thumbnailCreate(file);
+		
+		if(res==1) return "redirect:/message/thumnailCreateOk";
+		else return "redirect:/message/thumnailCreateNo";
+	}
+	
+	// 결제할 내역을 입력할 창 호출하기
+	@RequestMapping(value="/merchant/merchant", method=RequestMethod.GET)
+	public String merchantGet() {
+		return "study/merchant/merchant";
+	}
+	
+	// 결제창 호출하기
+	@RequestMapping(value="/merchant/merchant", method=RequestMethod.POST)
+	public String merchantPost(DbPayMentVO vo, Model model, HttpSession session) {
+		session.setAttribute("sDbPayMentVO", vo);
+		model.addAttribute("vo", vo);
+		return "study/merchant/sample";
+	}
+	
+	// 결제할 내역을 입력할 창 호출하기
+	@RequestMapping(value="/merchant/merchantOk", method=RequestMethod.GET)
+	public String merchantOkGet(Model model, HttpSession session) {
+		DbPayMentVO vo = (DbPayMentVO) session.getAttribute("sDbPayMentVO");
+		model.addAttribute("vo", vo);
+		session.removeAttribute("sDbPayMentVO");
+		return "study/merchant/merchantOk";
+	}
+	
+	// 트랜잭션 연습폼 호출
+	@RequestMapping(value="/transaction/transaction", method=RequestMethod.GET)
+	public String transactionGet(Model model, HttpSession session) {
+		return "study/transaction/transaction";
+	}
+
+	// 트랜잭션 개별 입력처리
+	@Transactional
+	@RequestMapping(value="/transaction/input1", method=RequestMethod.GET)
+	public String inputGet(TransactionVO vo) {
+		studyService.setTransactionUserInput1(vo);
+		studyService.setTransactionUserInput2(vo);
+		
+		return "redirect:/message/transactionInput1Ok";
+	}
+
+	@RequestMapping(value="/transaction/input2", method=RequestMethod.GET)
+	public String input2Get(TransactionVO vo) {
+		studyService.setTransactionUserInput(vo);
+		// 이곳은 기타 처리가 들어가는 영역
+		return "redirect:/message/transactionInput2Ok";
+	}
+
+	// 회원(user) 전체 리스트 보기
+	@RequestMapping(value="/transaction/transactionList", method=RequestMethod.GET)
+	public String transactionListGet(Model model,
+			@RequestParam(name="userSelect", defaultValue="user", required=false) String userSelect) {
+		List<TransactionVO> vos = studyService.setTransactionUserList(userSelect);
+		model.addAttribute("vos", vos);
+		model.addAttribute("userSelect", userSelect);
+		return "study/transaction/transactionList";
+	}
+
 	
 }

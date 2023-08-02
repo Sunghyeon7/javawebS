@@ -65,6 +65,8 @@ public class GuestController {
 		return "guest/guestList";
 	}
 	
+	
+	
 	@RequestMapping(value = "/guestInput", method = RequestMethod.GET)
 	public String guestInputGet() {
 		return "guest/guestInput";
@@ -81,6 +83,7 @@ public class GuestController {
 			return "redirect:/message/guestInputNo";
 		}
 	}
+	
 	
 	@RequestMapping(value = "/adminLogin", method = RequestMethod.GET)
 	public String adminLoginGet() {

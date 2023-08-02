@@ -85,7 +85,7 @@
   </update>
   
   <update id="setBoardReplyUpdate">
-  	update board2Reply set content = #{content}, hostIp = #{hostIp} where idx = #{idx}; 
+    update board2Reply set content = #{content}, hostIp = #{hostIp} where idx = #{idx};
   </update>
   
   
@@ -99,7 +99,6 @@
   </delete>
   
   <delete id="setBoardReplyDelete">
-    <!-- <if test="<![CDATA[level >= 1]]>"> -->
     <if test="level >= 1">
     	delete from board2Reply where idx = #{replyIdx};
     </if>

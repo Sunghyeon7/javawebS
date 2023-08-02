@@ -43,7 +43,7 @@
         <p>Name</p>
         <img src="${ctp}/resources/images/bandmember.jpg" class="w3-round" alt="Random Name" style="width:60%">
       </div>
-    </div>
+    </div>d
   </div>
 
   <!-- The Tour Section -->

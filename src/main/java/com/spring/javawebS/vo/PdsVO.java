@@ -19,6 +19,6 @@ public class PdsVO {
 	private String content;
 	private String hostIp;
 	
-	private int day_diff;		// 새글처리를 위한 변수
-	private int hour_diff;	// 새글처리를 위한 변수
+	private int day_diff;		// 날짜간격을 비교하기 위한 변수
+	private int hour_diff;	// 시간간격을 처리하기 위한 변수
 }
