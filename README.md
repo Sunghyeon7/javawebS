@@ -42,3 +42,7 @@ public class Test(){
     <td>어머니</td><td>사오육</td><td>55</td>
   </tr>
 </table>
+<hr/>
+
+<!-- 이미지 처리 -->
+![JavaWebS](https://github.com/Sunghyeon7/javawebS/blob/master/src/main/webapp/resources/images/main.jpg)
